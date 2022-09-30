@@ -31,7 +31,7 @@ interfaces = config.items('INTERFACES')
 #next make interfaces codes list
 ifList = []
 for interface in range(len(interfaces)):
-    ifList.append(interfaces[interface][1])
+    ifList.append(interfaces[interface][1]) #Interfaces list
 
 def SNMPinspect(specifymib, specifyoption, specifyInterface):
     for (errorIndication,
@@ -41,26 +41,22 @@ def SNMPinspect(specifymib, specifyoption, specifyInterface):
                                 CommunityData('public', mpModel=0),
                                 UdpTransportTarget(('192.168.10.1', 161)),
                                 ContextData(),
-                                ObjectType(ObjectIdentity(str(specifymib), str(specifyoption), str(specifyInterface))),
+                                ObjectType(ObjectIdentity(f'{specifymib}', f'{specifyoption}', f'{specifyInterface}')),
                                  ):
+
         if errorIndication or errorStatus:
-            print(errorIndication or errorStatus)
+            with open("log.txt") as log_file:
+                log_file.write(errorIndication or errorStatus)
             break
         else:
+            for varBind in varBinds:
+                print(' = '.join([x.prettyPrint() for x in varBind]))
 
-            for i in range(0,len(varBinds)):
-                portUp = "Is UP"
-                portDown = "Is Down"
-                if str(varBinds[i][1]) == 'up':
-                    print("Port " + str(i+1) + " " + portUp)
-                elif str(varBinds[i][1]) == 'down':
-                    print("Port " + str(i+1) + " " + portDown)
-                else:
-                    print("Stare port necunoscuta")
+#parse the interfaces list and apply function defined above
+for i in range(len(ifList)):
+    SNMPinspect(MIB, OPTION, ifList[i])
 
-
-
-
+#print(OPTION, type(OPTION))
 
 
 
