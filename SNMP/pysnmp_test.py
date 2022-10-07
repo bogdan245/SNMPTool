@@ -1,5 +1,5 @@
 from pysnmp.hlapi import *
-import time, sys, os, configparser
+import time, sys, os, configparser, json
 
 
 # Reading configuration files
@@ -33,31 +33,45 @@ ifList = []
 for interface in range(len(interfaces)):
     ifList.append(interfaces[interface][1]) #Interfaces list
 
-def SNMPinspect(specifymib, specifyoption, specifyInterface):
+
+
+intDict = {}
+intList = [] #interfaces dict
+def SNMPinspect( specifyHost, specifyInterface):
+
     for (errorIndication,
              errorStatus,
              errorIndex,
              varBinds) in getCmd(SnmpEngine(),
                                 CommunityData('public', mpModel=0),
-                                UdpTransportTarget(('192.168.10.1', 161)),
+                                UdpTransportTarget((f'{specifyHost}', 161)),
                                 ContextData(),
-                                ObjectType(ObjectIdentity(f'{specifymib}', f'{specifyoption}', f'{specifyInterface}')),
+                                ObjectType(ObjectIdentity('IF-MIB', 'ifOperStatus', f'{specifyInterface}')),
                                  ):
 
+        resultDict = {}
         if errorIndication or errorStatus:
-            with open("log.txt") as log_file:
+            with open("log.txt", "w") as log_file:
                 log_file.write(errorIndication or errorStatus)
             break
         else:
-            for varBind in varBinds:
-                print(' = '.join([x.prettyPrint() for x in varBind]))
+            for bind in varBinds:
+                #print(bind.prettyPrint())
+                intList.append(bind[1].prettyPrint())
+
+
 
 #parse the interfaces list and apply function defined above
-for i in range(len(ifList)):
-    SNMPinspect(MIB, OPTION, ifList[i])
-
+for j in range (len(host_list)):
+    for i in range(len(ifList)):
+        SNMPinspect(host_list[j], ifList[i])
+    intDict[host_list[j]] = intList
 #print(OPTION, type(OPTION))
 
+with open("returned_json\\output.json", 'w') as output:
+    output.write(json.dumps(intDict))
 
 
+
+#print(intList)
 
