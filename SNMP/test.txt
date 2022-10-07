@@ -1,1 +1,0 @@
-IF-MIB::ifOperStatus.5009 = down
